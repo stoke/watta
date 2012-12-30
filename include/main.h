@@ -57,6 +57,11 @@ unsigned char getmem(cpu_state_t *, unsigned short);
 unsigned char getmem_indirect(cpu_state_t *, unsigned short);
 
 /* Opcodes */
-bool adc_immidiate(cpu_state_t*);
+bool adc_immidiate(cpu_state_t *);
 bool clc(cpu_state_t *);
 bool sta_zeropage(cpu_state_t *);
+bool sta_absolute(cpu_state_t *);
+bool inx(cpu_state_t *);
+bool iny(cpu_state_t *);
+bool dex(cpu_state_t *);
+bool dey(cpu_state_t *);

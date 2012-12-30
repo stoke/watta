@@ -11,7 +11,7 @@ cpu_state_t *init_cpu() {
   cpu->PC = 0;
   cpu->SR = 0;
   cpu->S = 1 << 8; // first 8 bits are always 00000001
-  cpu->A = 0;
+  cpu->X = cpu->Y = cpu->A = 0;
   cpu->code = NULL;
   
   for (n = 0; n < 0xFF; n++)
@@ -20,7 +20,16 @@ cpu_state_t *init_cpu() {
   opcodes[0x69] = adc_immidiate;
   opcodes[0x18] = clc;
   opcodes[0x85] = sta_zeropage;
+  opcodes[0x95] = sta_zeropage;
+  opcodes[0x8D] = sta_absolute;
+  opcodes[0x9D] = sta_absolute;
+  opcodes[0x99] = sta_absolute;
+  opcodes[0xE8] = inx;
+  opcodes[0xC8] = iny;
+  opcodes[0x88] = dey;
+  opcodes[0xCA] = dex;
   
+
   return cpu;
 }
 
@@ -59,7 +68,59 @@ unsigned char getmem_indirect(cpu_state_t *cpu, unsigned short addr) {
 
 bool clc(cpu_state_t *cpu) {
   cpu->SR = ZERO_ZERO(cpu->SR);
-  ++cpu->PC;
+  cpu->PC++;
+
+  return true;
+}
+
+bool inx(cpu_state_t *cpu) {
+  cpu->X++;
+  cpu->PC++;
+  
+  if (!cpu->X)
+    cpu->SR = SET_ZERO(cpu->SR);
+
+  if (cpu->X < 0)
+    cpu->SR = SET_NEGATIVE(cpu->SR);
+
+  return true;
+}
+
+bool iny(cpu_state_t *cpu) {
+  cpu->Y++;
+  cpu->PC++;
+  
+  if (!cpu->Y)
+    cpu->SR = SET_ZERO(cpu->SR);
+
+  if (cpu->Y < 0)
+    cpu->SR = SET_NEGATIVE(cpu->SR);
+
+  return true;
+}
+
+bool dex(cpu_state_t *cpu) {
+  cpu->X--;
+  cpu->PC++;
+
+  if (!cpu->X)
+    cpu->SR = SET_ZERO(cpu->SR);
+
+  if (cpu->X < 0)
+    cpu->SR = SET_NEGATIVE(cpu->SR);
+
+  return true;
+}
+
+bool dey(cpu_state_t *cpu) {
+  cpu->Y--;
+  cpu->PC++;
+  
+  if (!cpu->Y)
+    cpu->SR = SET_ZERO(cpu->SR);
+
+  if (cpu->Y < 0)
+    cpu->SR = SET_NEGATIVE(cpu->SR);
 
   return true;
 }
@@ -84,9 +145,33 @@ bool adc_immidiate(cpu_state_t *cpu) {
 
 bool sta_zeropage(cpu_state_t *cpu) {
   unsigned char arg = cpu->code[cpu->PC + 1];
+  unsigned char opcode = cpu->code[cpu->PC];
+
+  if (opcode == 0x95)
+    arg += cpu->X;
 
   cpu->mem[arg] = cpu->A;
   cpu->PC += 2;
+
+  return true;
+}
+
+bool sta_absolute(cpu_state_t *cpu) {
+  unsigned short arg = *((unsigned short *) (cpu->code + cpu->PC + 1));
+  unsigned char opcode = cpu->code[cpu->PC];
+
+  switch(opcode) {
+    case 0x9D:
+      arg += cpu->X;
+      break;
+
+    case 0x99:
+      arg += cpu->Y;
+      break;
+  }
+  
+  cpu->mem[arg] = cpu->A;
+  cpu->PC += 3;
 
   return true;
 }
