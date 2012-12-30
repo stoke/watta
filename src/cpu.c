@@ -24,11 +24,12 @@ cpu_state_t *init_cpu() {
   opcodes[0x8D] = sta_absolute;
   opcodes[0x9D] = sta_absolute;
   opcodes[0x99] = sta_absolute;
+  opcodes[0x81] = sta_indirect;
+  opcodes[0x91] = sta_indirect;
   opcodes[0xE8] = inx;
   opcodes[0xC8] = iny;
   opcodes[0x88] = dey;
   opcodes[0xCA] = dex;
-  
 
   return cpu;
 }
@@ -60,10 +61,16 @@ unsigned char getmem(cpu_state_t *cpu, unsigned short addr) {
   return cpu->mem[addr];
 }
 
-unsigned char getmem_indirect(cpu_state_t *cpu, unsigned short addr) {
+unsigned char getmem_indirect(cpu_state_t *cpu, unsigned short addr, unsigned char add) {
   unsigned short ind_addr = *((unsigned short *) (cpu->mem + addr));
 
-  return cpu->mem[ind_addr];
+  return cpu->mem[ind_addr + add];
+}
+
+unsigned char setmem_indirect(cpu_state_t *cpu, unsigned short addr, unsigned char add, unsigned char b) {
+  unsigned short ind_addr = *((unsigned short *) (cpu->mem + addr));
+
+  return cpu->mem[ind_addr + add] = b;
 }
 
 bool clc(cpu_state_t *cpu) {
@@ -171,6 +178,25 @@ bool sta_absolute(cpu_state_t *cpu) {
   }
   
   cpu->mem[arg] = cpu->A;
+  cpu->PC += 3;
+
+  return true;
+}
+
+bool sta_indirect(cpu_state_t *cpu) {
+  unsigned short arg = *((unsigned short *) (cpu->code + cpu->PC + 1));
+  unsigned char opcode = cpu->code[cpu->PC];
+
+  switch (opcode) {
+    case 0x81:
+      setmem_indirect(cpu, arg + cpu->X, 0, cpu->A);
+      break;
+
+    case 0x91:
+      setmem_indirect(cpu, arg, cpu->Y, cpu->A);
+      break;
+  }
+
   cpu->PC += 3;
 
   return true;

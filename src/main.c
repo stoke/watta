@@ -37,6 +37,18 @@ int main(int argc, char **argv) {
   process_instructions(cpu, "\xC8\xC8\x9D\x00\x20\x99\x00\x21", 8);
   assert(cpu->Y == 1 && getmem(cpu, 0x2001) == cpu->A && getmem(cpu, 0x2101) == cpu->A);
 
+  cpu->A = 0xC0;
+  cpu->mem[0x9000] = 0x00;
+  cpu->mem[0x9001] = 0x20;
+  process_instructions(cpu, "\x81\xFF\x8F", 3);
+  assert(getmem(cpu, 0x2000) == 0xC0);
+  
+  cpu->A = 0xFA;
+  cpu->mem[0x9000] = 0x00;
+  cpu->mem[0x9001] = 0x1F;
+  process_instructions(cpu, "\x91\x00\x90", 3);
+  assert(getmem(cpu, 0x1F01) == 0xFA);
+
   status(cpu);
 
   return 0;

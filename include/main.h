@@ -54,7 +54,8 @@ cpu_state_t *init_cpu();
 void status(cpu_state_t*);
 void process_instructions(cpu_state_t*, char*, int);
 unsigned char getmem(cpu_state_t *, unsigned short);
-unsigned char getmem_indirect(cpu_state_t *, unsigned short);
+unsigned char getmem_indirect(cpu_state_t *, unsigned short, unsigned char);
+unsigned char setmem_indirect(cpu_state_t *, unsigned short, unsigned char, unsigned char);
 
 /* Opcodes */
 bool adc_immidiate(cpu_state_t *);
@@ -65,3 +66,4 @@ bool inx(cpu_state_t *);
 bool iny(cpu_state_t *);
 bool dex(cpu_state_t *);
 bool dey(cpu_state_t *);
+bool sta_indirect(cpu_state_t *);
